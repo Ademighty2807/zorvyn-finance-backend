@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FinancialRecordController;
+use App\Http\Controllers\AnalyticsController;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
@@ -16,6 +17,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
         // All roles
+        // routes/api.php — inside auth:sanctum middleware group
+
+        Route::get('/analytics', [AnalyticsController::class, 'index']);
         Route::get('/records', [FinancialRecordController::class, 'index']);
         Route::get('/records/{financialRecord}', [FinancialRecordController::class, 'show']);
 

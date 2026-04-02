@@ -12,7 +12,7 @@ class UpdateFinancialRecordRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -20,8 +20,6 @@ class UpdateFinancialRecordRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    public function authorize(): bool { return true; }
-
     public function rules(): array
     {
         return [
