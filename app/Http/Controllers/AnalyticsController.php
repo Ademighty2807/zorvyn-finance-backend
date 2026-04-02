@@ -8,40 +8,24 @@ use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
 {
-    private function applyFilters($query, Request $request)
-    {
-        if ($request->filled('from')) {
-            $query->whereDate('date', '>=', $request->from);
-        }
-
-        if ($request->filled('to')) {
-            $query->whereDate('date', '<=', $request->to);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-
-        return $query;
-    }
     public function index(Request $request)
     {
-        $user = $request->user();
-
-        // Scope query based on role
+        $user  = $request->user();
         $query = $user->hasRole('viewer')
             ? FinancialRecord::where('user_id', $user->id)
             : FinancialRecord::query();
 
-         $this->applyFilters($query, $request);
+        if ($request->filled('from')) $query->whereDate('date', '>=', $request->from);
+        if ($request->filled('to'))   $query->whereDate('date', '<=', $request->to);
+        if ($request->filled('type')) $query->where('type', $request->type);
 
-        return response()->json([
+        return $this->success([
             'overview'            => $this->getOverview(clone $query),
             'monthly_breakdown'   => $this->getMonthlyBreakdown(clone $query),
             'category_breakdown'  => $this->getCategoryBreakdown(clone $query),
             'status_summary'      => $this->getStatusSummary(clone $query),
             'recent_transactions' => $this->getRecentTransactions(clone $query),
-        ]);
+        ], 'Analytics fetched successfully');
     }
 
     // Total income, expense and net balance

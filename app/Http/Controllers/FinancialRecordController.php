@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 
 class FinancialRecordController extends Controller
 {
-    // GET /records — Admin & Accountant see all, Viewer sees own
     public function index(Request $request)
     {
         $user = $request->user();
@@ -19,10 +18,12 @@ class FinancialRecordController extends Controller
             ? FinancialRecord::where('user_id', $user->id)->with('user')->latest()->paginate(15)
             : FinancialRecord::with('user')->latest()->paginate(15);
 
-        return FinancialRecordResource::collection($records);
+        return $this->success(
+            FinancialRecordResource::collection($records),
+            'Records fetched successfully'
+        );
     }
 
-    // POST /records
     public function store(StoreFinancialRecordRequest $request)
     {
         $record = FinancialRecord::create([
@@ -30,28 +31,34 @@ class FinancialRecordController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        return new FinancialRecordResource($record->load('user'));
+        return $this->created(
+            new FinancialRecordResource($record->load('user')),
+            'Record created successfully'
+        );
     }
 
-    // GET /records/{id}
     public function show(FinancialRecord $financialRecord)
     {
-        return new FinancialRecordResource($financialRecord->load('user'));
+        return $this->success(
+            new FinancialRecordResource($financialRecord->load('user')),
+            'Record fetched successfully'
+        );
     }
 
-    // PUT /records/{id}
     public function update(UpdateFinancialRecordRequest $request, FinancialRecord $financialRecord)
     {
         $financialRecord->update($request->validated());
 
-        return new FinancialRecordResource($financialRecord->load('user'));
+        return $this->success(
+            new FinancialRecordResource($financialRecord->load('user')),
+            'Record updated successfully'
+        );
     }
 
-    // DELETE /records/{id}
     public function destroy(FinancialRecord $financialRecord)
     {
         $financialRecord->delete();
 
-        return response()->json(['message' => 'Record deleted successfully']);
+        return $this->noContent('Record deleted successfully');
     }
 }

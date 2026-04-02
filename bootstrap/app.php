@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,16 +15,52 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // $middleware->api(prepend: [
-        //     \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        // ]);
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
         ]);
 
-        //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+
+        // ✅ Validation Error (422)
+        $exceptions->render(function (ValidationException $e, $request) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+        });
+
+        // ✅ Model Not Found (404)
+        $exceptions->render(function (ModelNotFoundException $e, $request) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Resource not found',
+                'errors'  => null,
+            ], 404);
+        });
+
+        // ✅ Unauthenticated (401)
+        $exceptions->render(function (UnauthorizedHttpException $e, $request) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated',
+                'errors'  => null,
+            ], 401);
+        });
+
+        // ✅ Fallback (any other error)
+        $exceptions->render(function (\Throwable $e, $request) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => app()->isLocal()
+                    ? $e->getMessage()   // show real error in dev
+                    : 'Something went wrong',
+                'errors'  => null,
+            ], 500);
+        });
+
+    })
+    ->create();

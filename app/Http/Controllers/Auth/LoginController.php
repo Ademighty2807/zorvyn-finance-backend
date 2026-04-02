@@ -14,30 +14,23 @@ class LoginController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): array
+    public function store(LoginRequest $request)
     {
         $request->authenticate();
 
-        $user = $request->user();
-
+        $user  = $request->user();
         $token = $user->createToken('main')->plainTextToken;
 
-
-        return [
-            'user' => new UserResource($user),
-            'token' => $token
-        ];
+        return $this->success([
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ], 'Login successful, copy the token for authenticated requests');
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
-    public function destroy(Request $request): Response
+    public function destroy(Request $request)
     {
-        $user = $request->user();
+        $request->user()->currentAccessToken()->delete();
 
-        $user->currentAccessToken()->delete();
-
-        return response()->noContent();
+        return $this->noContent('Logged out successfully');
     }
 }
