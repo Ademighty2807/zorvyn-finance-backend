@@ -165,7 +165,9 @@ After running `php artisan migrate --seed`, the following test accounts and reco
 
 ### Base URL
 ```
-http://localhost:8000/api
+## Base URL
+```
+https://zorvyn-finance-backend-production-e3e4.up.railway.app/api
 ```
 
 ### Authentication
