@@ -2,19 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class RolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $roles = ['admin', 'accountant', 'viewer'];
+        // Clear cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
             'view_records',
@@ -24,17 +21,34 @@ class RolePermissionSeeder extends Seeder
             'view_analytics',
         ];
 
+        // ✅ firstOrCreate instead of create
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
+        $roles = [
+            'admin',
+            'accountant',
+            'viewer',
+        ];
+
         foreach ($roles as $role) {
-            Role::create(['name' => $role]);
+            Role::firstOrCreate(['name' => $role]);
         }
 
         // Assign permissions per role
-        Role::findByName('admin')->givePermissionTo(Permission::all());
-        Role::findByName('accountant')->givePermissionTo(['view_records', 'create_records', 'edit_records', 'view_analytics']);
-        Role::findByName('viewer')->givePermissionTo(['view_records', 'view_analytics']);
+        Role::findByName('admin')->syncPermissions(Permission::all());
+
+        Role::findByName('accountant')->syncPermissions([
+            'view_records',
+            'create_records',
+            'edit_records',
+            'view_analytics',
+        ]);
+
+        Role::findByName('viewer')->syncPermissions([
+            'view_records',
+            'view_analytics',
+        ]);
     }
 }

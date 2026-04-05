@@ -14,16 +14,47 @@ class FinancialRecordController extends Controller
     {
         $user = $request->user();
 
-        $records = $user->hasRole('viewer')
-            ? FinancialRecord::where('user_id', $user->id)->with('user')->latest()->paginate(15)
-            : FinancialRecord::with('user')->latest()->paginate(15);
+        $query = $user->hasRole('viewer')
+            ? FinancialRecord::where('user_id', $user->id)->with('user')
+            : FinancialRecord::with('user');
+
+        // Search
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', "%{$request->search}%")
+                ->orWhere('category', 'like', "%{$request->search}%")
+                ->orWhere('description', 'like', "%{$request->search}%");
+            });
+        }
+
+        // Filters
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('from')) {
+            $query->whereDate('date', '>=', $request->from);
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('date', '<=', $request->to);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $records = $query->latest()->paginate(15);
 
         return $this->success(
             FinancialRecordResource::collection($records),
             'Records fetched successfully'
         );
     }
-
     public function store(StoreFinancialRecordRequest $request)
     {
         $record = FinancialRecord::create([
